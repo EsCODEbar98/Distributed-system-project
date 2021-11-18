@@ -1,0 +1,18 @@
+>Go to directory kafka using --> cd kafka
+
+>Start zookeeper
+
+bin/zookeeper-server-start.sh config zookeeper.properties
+
+>Start kafka
+
+bin/kafka-server-start.sh config/server.properties
+
+>Create a topic
+
+bin/kafka-topics.sh --create --topic TEST --bootstrap-server localhost:9092
+
+>Create a consumer running in the cmd line
+
+bin/kafka-console-consumer.sh --topic TEST --bootstrap-server localhost:9092
+
