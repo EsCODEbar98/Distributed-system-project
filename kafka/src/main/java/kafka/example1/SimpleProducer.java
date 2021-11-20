@@ -7,7 +7,7 @@ import java.util.List;
  */
 import java.util.Properties;
 import java.util.Random;
-
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -42,51 +42,54 @@ public class SimpleProducer {
 //****************************************************************	
 
 
-	void produceAndPrint(String topic,int zone,int seed, int iteration,int start){
-		Random generator = new Random(seed);
-		if(zone==0 || zone ==2) {
-			double perc = generator.nextDouble();
-			iteration= (int) Math.floor(iteration*perc);
-			
-		}
+	void produceAndPrint(String topic,int zone,long []IDs, int batchSize,int start){
+
+		Random rand = new Random();
+		List<String> gatesList = Arrays.asList("A", "B", "C","D");
+		List<String> failList = Arrays.asList("OK","REJ");
+		String randomGate;
+		String randomFail;
 		
-		
-		for (int i = start; i < iteration; i++){
+		for (int i = start; i <= batchSize; i++){
 			// Fire-and-forget send(topic, key, value)
 			// Send adds records to unsent records buffer and return
 			
 			// CHECK-IN --> STARTING POINT
 			if (zone==0) {
-				String msg = "{\"passenger_ID\":"+Integer.toString(generator.nextInt())+",\"area\":0}";
+				String msg = "{\"passenger_ID\":"+Long.toString(IDs[i])+"}";
 			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(generator.nextInt()),"VALUE CHECK-IN : "+msg));
+					.toString(zone),msg));
 			}
 			// SECURITY CHECK
 			if (zone==1) {
-				List<String> givenList = Arrays.asList("A", "B", "C","D");
-			    Random rand = new Random();
-			    String randomGate = givenList.get(rand.nextInt(givenList.size()));
 				
-				String msg="{\"passenger_ID\":"+Integer.toString(generator.nextInt())+",\"area\":1,\"gate\":"+randomGate+"}"; 
+			    randomGate = gatesList.get(rand.nextInt(gatesList.size()));
+			    randomFail="OK";
+			    if(i%10==0) 
+			    {
+			    	randomFail = failList.get(rand.nextInt(failList.size()));
+			    }
+				
+				String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\",\"status\":\""+randomFail+"\"}"; 
 			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(generator.nextInt()),"VALUE SECURITY CHECK: "+msg));
+					.toString(zone),msg));
 			}
 			// SHOPS
 			if (zone==2) {
-			String msg = "{\"passenger_ID\":"+Integer.toString(generator.nextInt())+",\"area\":2}";
+			String msg = "{\"passenger_ID\":"+Long.toString(IDs[i])+"}";
 			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(generator.nextInt()),"VALUE SHOPS : "+msg));
+					.toString(zone),msg));
 			}
 			
 			// GATES --> LEAVING POINT
 			if (zone==3) {
-			List<String> givenList = Arrays.asList("A", "B", "C","D");
-		    Random rand = new Random();
-		    String randomGate = givenList.get(rand.nextInt(givenList.size()));
 			
-			String msg="{\"passenger_ID\":"+Integer.toString(generator.nextInt())+",\"area\":3,\"gate\":"+randomGate+"}";   
+			randomGate = gatesList.get(rand.nextInt(gatesList.size()));
+		    
+			
+			String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\"}";   
 			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(generator.nextInt()),"VALUE GATES: "+msg));
+					.toString(zone),msg));
 			
 			}
 	}}
@@ -96,33 +99,118 @@ public class SimpleProducer {
 	}
 
 	public static void main(String[] args) {
-		int count=10;
-		//System.setProperty("kafka.logs.dir", "/home/isabel/kafka/logs");
+		
+		int count=1000;
+		double perc;
+		int seed = 20;
+		//Extremes of group of people
+		int minBatch=10;
+		int maxBatch=150;
+		
+		//Actual batch size 
+		int batchSizeCheckIn=0;
+		int batchSizeSecurity=0;
+		int batchSizeShops=0;
+		int batchSizeGates=0;
+		//People that don't take the fly
+		int batchRemainderGates=0;
+		// Number of people of the actual 
+		// batch size depending on the random percentage
+		int effectiveSizeCheckIn;
+		int effectiveSizeShops;
+		int effectiveSizeGates;
+		// Flag for check the initial condition
+		boolean isFirstBatch=true;
+		// Integer that keep track of the advancement
+		// in the random sequence
+		int sequenceTracker=0;
+		int tmpTracker=0;
+		
+		Random intGenerator=new Random(seed);
+		Random doubleGenerator=new Random(seed);
+		long[] randomIDs = new long[10000];
+		
+		for(int i=0;i<randomIDs.length;i++) {
+			
+			randomIDs[i]=Integer.toUnsignedLong(intGenerator.nextInt());
+		}
+	
 		SimpleProducer myProducer = new SimpleProducer();
 		while(count>0) {
-		myProducer.produceAndPrint("TEST",0,20,50+50*count,0);
+		if(isFirstBatch){
+			
+			perc=doubleGenerator.nextDouble();
+			batchSizeCheckIn=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+			effectiveSizeCheckIn=(int) Math.floor(batchSizeCheckIn*perc);
+			
+			batchSizeSecurity=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+			
+			perc=doubleGenerator.nextDouble();
+			batchSizeShops= intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+			effectiveSizeShops=(int) Math.floor(batchSizeShops*perc);
+			
+			perc=doubleGenerator.nextDouble();
+			batchSizeGates= intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+			effectiveSizeGates=(int) Math.floor(batchSizeGates*perc);
+			batchRemainderGates=0;
+			
+			sequenceTracker=batchSizeCheckIn+batchSizeSecurity+batchSizeShops+batchSizeGates;
+			isFirstBatch=false;
 		
+		}
+		else{
+			batchSizeGates= batchSizeShops;
+			batchSizeShops= batchSizeSecurity;
+			batchSizeSecurity=batchSizeCheckIn;
+			
+			perc=doubleGenerator.nextDouble();
+			effectiveSizeShops=(int) Math.floor(batchSizeShops*perc);
+			perc=doubleGenerator.nextDouble();
+			effectiveSizeGates=(int) Math.floor(batchSizeGates*perc);
+			
+			batchRemainderGates=batchSizeGates-effectiveSizeGates;
+			
+			perc=doubleGenerator.nextDouble();
+			batchSizeCheckIn=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+			effectiveSizeCheckIn=(int) Math.floor(batchSizeCheckIn*perc);
+			
+			sequenceTracker+=batchSizeCheckIn;
+			if(sequenceTracker>10000) {
+				seed+=1;
+				intGenerator=new Random(seed);
+				for(int i=0;i<randomIDs.length;i++) {
+					
+					randomIDs[i]=Integer.toUnsignedLong(intGenerator.nextInt());
+				}
+				sequenceTracker=batchSizeCheckIn+batchSizeSecurity+batchSizeShops+batchSizeGates;
+			}
+		}
+		
+		tmpTracker=sequenceTracker;
+		
+		myProducer.produceAndPrint("CheckIn",0,randomIDs,tmpTracker,tmpTracker-effectiveSizeCheckIn);
+		
+		tmpTracker-=batchSizeCheckIn;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("TEST2",1,20,50+50*(count+1),50+50*count);
-		
+		myProducer.produceAndPrint("Security",1,randomIDs,tmpTracker,tmpTracker-batchSizeSecurity);
+		tmpTracker-=batchSizeSecurity;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("TEST3",2,20,50+50*(count+2),50+50*count);
-		
+		myProducer.produceAndPrint("Shops",2,randomIDs,tmpTracker,tmpTracker-effectiveSizeShops);
+		tmpTracker-=batchSizeShops;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("TEST4",3,20,50+50*(count+3),50+50*count);
-		
+		myProducer.produceAndPrint("GatesDep",3,randomIDs,tmpTracker,tmpTracker-effectiveSizeGates-batchRemainderGates);
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
