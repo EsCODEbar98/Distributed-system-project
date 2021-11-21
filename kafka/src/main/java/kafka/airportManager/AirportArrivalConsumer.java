@@ -1,17 +1,19 @@
-package kafka.example1;
+package kafka.airportManager;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 
-public class SimpleConsumer {
+public class AirportArrivalConsumer {
 	// http://syncor.blogspot.com.es/2013/09/getting-started-with-log4j-2-in-eclipse.html
 
 	public static void main(String[] args) {
@@ -26,6 +28,7 @@ public class SimpleConsumer {
 
 		Properties consumerConfig;
 		KafkaConsumer<String, String> consumer;
+
 
 		//Configuration of the properties of the Kafka consumer
 		consumerConfig = new Properties();
@@ -55,7 +58,9 @@ public class SimpleConsumer {
 //  2. KAFKA CONSUMER CLIENT CREATION AND TOPIC SUBSCRIPTION
 //****************************************************************
 		consumer = new KafkaConsumer<String, String>(consumerConfig);
-		consumer.subscribe(Arrays.asList("DS"));
+		consumer.subscribe(Arrays.asList("AirportDep"));
+
+
 		
 //****************************************************************
 //  3. TOPIC CONSUMPTION
@@ -67,11 +72,14 @@ public class SimpleConsumer {
 		while ( !end) {
 			ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 		
-			for (ConsumerRecord<String, String> record : records) {
-				System.out.println("something consumed");
-				System.out.printf("offset = %d, key = %s, value = %s%n",
-						record.offset(), record.key(), record.value());
+			for (TopicPartition partition: records.partitions()) {
+				List<ConsumerRecord<String,String>> partitionRecords=records.records(partition);
+				for(ConsumerRecord<String,String> record : partitionRecords) {
+					System.out.println("something consumed");
+					System.out.printf("offset = %d, key = %s, partition = %d VALUE=%s%n",
+							record.offset(), record.key(), record.partition(),record.value());
 			}
+		}
 		}
 		consumer.close();
 	}

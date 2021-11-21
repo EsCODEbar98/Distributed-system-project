@@ -1,19 +1,15 @@
-package kafka.example1;
+package kafka.airportManager;
 import java.util.Arrays;
 import java.util.List;
-/**
- * Simple producer 
- * @Author Isabel Muñoz
- */
 import java.util.Properties;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 
-public class SimpleProducer {
+public class AirportDepartureProducer {
 
 	Properties props; // The producer is a Kafka client that publishes records to the Kafka cluster.
 
@@ -22,11 +18,11 @@ public class SimpleProducer {
 //****************************************************************
 // 1.KAFKA PRODUCER CONFIGURATION 
 //****************************************************************
-	SimpleProducer() {
+	AirportDepartureProducer() {
 		
 		Properties props = new Properties();
 		props.put("bootstrap.servers", "localhost:9092");
-		props.put("acks", "all");
+		props.put(ProducerConfig.ACKS_CONFIG,"all");
 		// Serializer for conversion the key type to bytes
 		props.put("key.serializer",
 				"org.apache.kafka.common.serialization.StringSerializer");
@@ -57,8 +53,7 @@ public class SimpleProducer {
 			// CHECK-IN --> STARTING POINT
 			if (zone==0) {
 				String msg = "{\"passenger_ID\":"+Long.toString(IDs[i])+"}";
-			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(zone),msg));
+			producer.send(new ProducerRecord<String, String>(topic,zone,"CheckIn",msg));
 			}
 			// SECURITY CHECK
 			if (zone==1) {
@@ -71,14 +66,12 @@ public class SimpleProducer {
 			    }
 				
 				String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\",\"status\":\""+randomFail+"\"}"; 
-			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(zone),msg));
+			producer.send(new ProducerRecord<String, String>(topic,zone,"Security",msg));
 			}
 			// SHOPS
 			if (zone==2) {
 			String msg = "{\"passenger_ID\":"+Long.toString(IDs[i])+"}";
-			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(zone),msg));
+			producer.send(new ProducerRecord<String, String>(topic,zone,"Shops",msg));
 			}
 			
 			// GATES --> LEAVING POINT
@@ -88,8 +81,7 @@ public class SimpleProducer {
 		    
 			
 			String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\"}";   
-			producer.send(new ProducerRecord<String, String>(topic,Integer
-					.toString(zone),msg));
+			producer.send(new ProducerRecord<String, String>(topic,zone,"GatesDep",msg));
 			
 			}
 	}}
@@ -135,7 +127,7 @@ public class SimpleProducer {
 			randomIDs[i]=Integer.toUnsignedLong(intGenerator.nextInt());
 		}
 	
-		SimpleProducer myProducer = new SimpleProducer();
+		AirportDepartureProducer myProducer = new AirportDepartureProducer();
 		while(count>0) {
 		if(isFirstBatch){
 			
@@ -188,7 +180,7 @@ public class SimpleProducer {
 		
 		tmpTracker=sequenceTracker;
 		
-		myProducer.produceAndPrint("CheckIn",0,randomIDs,tmpTracker,tmpTracker-effectiveSizeCheckIn);
+		myProducer.produceAndPrint("AirportDep",0,randomIDs,tmpTracker,tmpTracker-effectiveSizeCheckIn);
 		
 		tmpTracker-=batchSizeCheckIn;
 		try {
@@ -196,21 +188,21 @@ public class SimpleProducer {
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("Security",1,randomIDs,tmpTracker,tmpTracker-batchSizeSecurity);
+		myProducer.produceAndPrint("AirportDep",1,randomIDs,tmpTracker,tmpTracker-batchSizeSecurity);
 		tmpTracker-=batchSizeSecurity;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("Shops",2,randomIDs,tmpTracker,tmpTracker-effectiveSizeShops);
+		myProducer.produceAndPrint("AirportDep",2,randomIDs,tmpTracker,tmpTracker-effectiveSizeShops);
 		tmpTracker-=batchSizeShops;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("GatesDep",3,randomIDs,tmpTracker,tmpTracker-effectiveSizeGates-batchRemainderGates);
+		myProducer.produceAndPrint("AirportDep",3,randomIDs,tmpTracker,tmpTracker-effectiveSizeGates-batchRemainderGates);
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {

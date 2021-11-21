@@ -8,11 +8,26 @@ bin/zookeeper-server-start.sh config/zookeeper.properties
 
 bin/kafka-server-start.sh config/server.properties
 
->Create a topic
+>Create a topic with N partitions
 
-bin/kafka-topics.sh --create --topic TEST --bootstrap-server localhost:9092
+bin/kafka-topics.sh --create --topic TESTB --partitions N --bootstrap-server localhost:9092
+
+> List all active topics
+
+bin/kafka-topics.sh --list --zookeeper  localhost:2181
+
+> Delete topic
+
+bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic TOPIC
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+REMEMBER: To delete a topic start the Kafka server in this way
+
+bin/kafka-server-start.sh config/server.properties --override delete.topic.enable=true
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 >Create a consumer running in the cmd line
 
 bin/kafka-console-consumer.sh --topic TEST --bootstrap-server localhost:9092
+
 
