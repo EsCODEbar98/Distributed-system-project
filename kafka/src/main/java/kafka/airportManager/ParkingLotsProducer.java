@@ -38,7 +38,7 @@ public class ParkingLotsProducer {
 //****************************************************************	
 
 
-	void produceAndPrint(String topic,long []IDs, int batchSize,int start){
+	int produceAndPrint(String topic,long []IDs, int batchSize,int start, int pp){
 
 		Random rand = new Random();
 		
@@ -50,12 +50,24 @@ public class ParkingLotsProducer {
 			// Fire-and-forget send(topic, key, value)
 			// Send adds records to unsent records buffer and return
 			String status=statusList.get(rand.nextInt(statusList.size()));
-			if(status=="ENTER") {partition=0;}			
-			if(status=="EXIT") {partition=1;}
+			if(status=="ENTER") {partition=0;
+                                             pp+=1;}			
+			if(status=="EXIT") {partition=1;
+                                             pp-=1;}
+                        if(pp<10){
+                                  partition=0;
+                                  pp+=1;}
+                        else if(pp>500){
+                                  partition=1;
+                                  pp-=1;}
 			String msg="{\"ticket_ID\":"+Long.toString(IDs[i])+",\"status\":\""+status+"\"}";
 			producer.send(new ProducerRecord<String, String>(topic,partition,"ParkingLots",msg));
 			
-	}}
+	}
+                        String msg="{\"Population\":\""+pp+"\"}";
+			producer.send(new ProducerRecord<String, String>(topic,2,"ParkingLots",msg)); 
+                        return pp;         
+         }
 
 	void stop() {
 		producer.close();
@@ -68,6 +80,7 @@ public class ParkingLotsProducer {
 		//Extremes of group of people
 		int minBatch=10;
 		int maxBatch=50;
+                int parkingPopulation=200;
 		
 		//Actual batch size 
 		int batchSize=0;
@@ -101,7 +114,7 @@ public class ParkingLotsProducer {
 			}
 			
 			
-		myProducer.produceAndPrint("ParkingLots",randomIDs,sequenceTracker,sequenceTracker-batchSize);
+		parkingPopulation=myProducer.produceAndPrint("ParkingLots",randomIDs,sequenceTracker,sequenceTracker-batchSize, parkingPopulation );
 		
 
 		try {
