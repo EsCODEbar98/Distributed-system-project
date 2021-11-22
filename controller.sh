@@ -41,6 +41,16 @@ elif [ "$1" = "delete" ]; then
     bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic AirportDep
     bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic AirportArr
     bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic ParkingLots
+elif [ "$1" = "info" ]; then
+    cd $DIR_KAFKA
+    bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic AirportDep
+    bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic AirportArr
+    bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic ParkingLots
+elif [ "$1" = "fix" ]; then
+    cd $DIR_KAFKA
+    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportDep --partitions 4
+    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportArr --partitions 4
+    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic ParkingLots --partitions 2
 elif [ "$1" = "stop" ]; then
     echo "Stopping simulation"
 
