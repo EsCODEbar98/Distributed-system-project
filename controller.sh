@@ -7,8 +7,20 @@ start_java () {
     /usr/lib/jvm/java-11-openjdk-amd64/bin/java -Dfile.encoding=UTF-8 -classpath /home/alumno/Distributed-system-project/kafka/target/classes:/home/alumno/.m2/repository/org/apache/kafka/kafka-clients/2.6.0/kafka-clients-2.6.0.jar:/home/alumno/.m2/repository/com/github/luben/zstd-jni/1.4.4-7/zstd-jni-1.4.4-7.jar:/home/alumno/.m2/repository/org/lz4/lz4-java/1.7.1/lz4-java-1.7.1.jar:/home/alumno/.m2/repository/org/xerial/snappy/snappy-java/1.1.7.3/snappy-java-1.1.7.3.jar:/home/alumno/.m2/repository/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.jar:/home/alumno/.m2/repository/org/slf4j/slf4j-simple/1.7.30/slf4j-simple-1.7.30.jar:/home/alumno/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.11.2/jackson-databind-2.11.2.jar:/home/alumno/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.11.2/jackson-annotations-2.11.2.jar:/home/alumno/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.11.2/jackson-core-2.11.2.jar kafka.airportManager.$1
 }
 
+producer_start () {
+    start_java AirportDepartureProducer &
+    start_java AirportArrivalProducer &
+    start_java ParkingLotsProducer &
+}
+
+producer_stop () {
+    PRODUCER_PIDS=$(pgrep -f 'bin/java')
+    test -n "$PRODUCER_PIDS" &&
+        kill $PRODUCER_PIDS
+}
+
 if [ "$1" = "start" ]; then
-    echo "Starting simulation"
+    echo "Starting servers..."
 
     # node-red
     node-red &
@@ -29,11 +41,6 @@ if [ "$1" = "start" ]; then
     ! echo "$TOPICS" | grep -q 'ParkingLots' &&
         bin/kafka-topics.sh --create --topic 'ParkingLots' --partitions 2 --bootstrap-server localhost:9092
 
-    # java
-    start_java AirportDepartureProducer &
-    start_java AirportArrivalProducer &
-    start_java ParkingLotsProducer &
-
     sleep 5
     echo -e "\n\nDone"
 elif [ "$1" = "delete" ]; then
@@ -51,13 +58,17 @@ elif [ "$1" = "fix" ]; then
     bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportDep --partitions 4
     bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportArr --partitions 4
     bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic ParkingLots --partitions 2
+elif [ "$1" = "pstart" ]; then
+    echo "Starting producers..."
+    producer_start
+elif [ "$1" = "pstop" ]; then
+    echo "Stopping producers..."
+    producer_stop
 elif [ "$1" = "stop" ]; then
-    echo "Stopping simulation"
+    echo "Stopping everything..."
 
     # java
-    PRODUCER_PIDS=$(pgrep -f 'bin/java')
-    test -n "$PRODUCER_PIDS" &&
-        kill $PRODUCER_PIDS
+    producer_stop
 
     # kafka
     cd $DIR_KAFKA
