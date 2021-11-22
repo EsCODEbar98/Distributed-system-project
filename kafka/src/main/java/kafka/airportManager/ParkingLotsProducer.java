@@ -88,7 +88,9 @@ public class ParkingLotsProducer {
 		while(count>0) {
 
 
-			if(sequenceTracker>10000) {
+		batchSize=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+		sequenceTracker+=batchSize;
+		if(sequenceTracker>10000) {
 				seed+=1;
 				intGenerator=new Random(seed);
 				for(int i=0;i<randomIDs.length;i++) {
@@ -97,8 +99,8 @@ public class ParkingLotsProducer {
 				}
 				sequenceTracker=batchSize;
 			}
-		batchSize=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
-		sequenceTracker+=batchSize;
+			
+			
 		myProducer.produceAndPrint("ParkingLots",randomIDs,sequenceTracker,sequenceTracker-batchSize);
 		
 
