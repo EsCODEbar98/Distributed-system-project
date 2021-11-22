@@ -53,7 +53,7 @@ public class ParkingLotsProducer {
 			if(status=="ENTER") {partition=0;}			
 			if(status=="EXIT") {partition=1;}
 			String msg="{\"ticket_ID\":"+Long.toString(IDs[i])+",\"status\":\""+status+"\"}";
-			producer.send(new ProducerRecord<String, String>(topic,partition,"GatesArrival",msg));
+			producer.send(new ProducerRecord<String, String>(topic,partition,"ParkingLots",msg));
 			
 	}}
 
