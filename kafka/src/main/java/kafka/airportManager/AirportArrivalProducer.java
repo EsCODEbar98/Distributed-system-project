@@ -97,9 +97,9 @@ public class AirportArrivalProducer {
 	
 		AirportArrivalProducer myProducer = new AirportArrivalProducer();
 		while(count>0) {
-
-
-			if(sequenceTracker>10000) {
+		batchSize=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+		sequenceTracker+=batchSize;
+		if(sequenceTracker>10000) {
 				seed+=1;
 				intGenerator=new Random(seed);
 				for(int i=0;i<randomIDs.length;i++) {
@@ -108,8 +108,6 @@ public class AirportArrivalProducer {
 				}
 				sequenceTracker=batchSize;
 			}
-		batchSize=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
-		sequenceTracker+=batchSize;
 		myProducer.produceAndPrint("AirportArr",randomIDs,sequenceTracker,sequenceTracker-batchSize);
 		
 
