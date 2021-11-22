@@ -109,6 +109,7 @@ public class AirportArrivalProducer {
 				sequenceTracker=batchSize;
 			}
 		batchSize=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
+		sequenceTracker+=batchSize;
 		myProducer.produceAndPrint("AirportArr",randomIDs,sequenceTracker,sequenceTracker-batchSize);
 		
 
@@ -120,7 +121,7 @@ public class AirportArrivalProducer {
 		
 		
 		count-=1;
-		sequenceTracker+=batchSize;
+		
 	}
 		myProducer.stop();
 
