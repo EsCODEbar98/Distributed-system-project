@@ -164,7 +164,7 @@ public class AirportDepartureProducer {
 			
 			perc=doubleGenerator.nextDouble();
 			batchSizeCheckIn=intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
-			effectiveSizeCheckIn=(int) Math.floor(batchSizeCheckIn*perc);
+			effectiveSizeCheckIn=(int) Math.floor(batchSizeCheckIn*perc*0.7);
 			
 			sequenceTracker+=batchSizeCheckIn;
 			if(sequenceTracker>10000) {
