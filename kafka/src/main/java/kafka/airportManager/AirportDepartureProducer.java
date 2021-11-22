@@ -143,7 +143,7 @@ public class AirportDepartureProducer {
 			
 			perc=doubleGenerator.nextDouble();
 			batchSizeGates= intGenerator.nextInt((maxBatch-minBatch)+1)+minBatch;
-			effectiveSizeGates=(int) Math.floor(batchSizeGates*perc);
+			effectiveSizeGates=(int) Math.floor(batchSizeGates*perc*0.7);
 			batchRemainderGates=0;
 			
 			sequenceTracker=batchSizeCheckIn+batchSizeSecurity+batchSizeShops+batchSizeGates;
