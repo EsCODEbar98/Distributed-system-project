@@ -58,7 +58,7 @@ public class ParkingLotsConsumer {
 //  2. KAFKA CONSUMER CLIENT CREATION AND TOPIC SUBSCRIPTION
 //****************************************************************
 		consumer = new KafkaConsumer<String, String>(consumerConfig);
-		consumer.subscribe(Arrays.asList("AirportDep"));
+		consumer.subscribe(Arrays.asList("ParkingLots"));
 
 
 		
