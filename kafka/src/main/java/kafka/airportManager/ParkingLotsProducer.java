@@ -36,8 +36,6 @@ public class ParkingLotsProducer {
 //****************************************************************
 //2. TOPIC PRODUCTION
 //****************************************************************	
-
-
 	int produceAndPrint(String topic,long []IDs, int batchSize,int start, int pp){
 
 		Random rand = new Random();
@@ -61,11 +59,11 @@ public class ParkingLotsProducer {
                                   partition=1;
                                   pp-=1;}
 			String msg="{\"ticket_ID\":"+Long.toString(IDs[i])+",\"status\":\""+status+"\"}";
-			producer.send(new ProducerRecord<String, String>(topic,partition,"ParkingLots",msg));
+			producer.send(new ProducerRecord<String, String>(topic,partition,status,msg));
 			
 	}
                         String msg="{\"Population\":\""+pp+"\"}";
-			producer.send(new ProducerRecord<String, String>(topic,2,"ParkingLots",msg)); 
+			producer.send(new ProducerRecord<String, String>(topic,2,"POP",msg)); 
                         return pp;         
          }
 
