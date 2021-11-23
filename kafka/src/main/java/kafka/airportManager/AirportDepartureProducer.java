@@ -42,10 +42,10 @@ public class AirportDepartureProducer {
 //****************************************************************	
 
 
-	void produceAndPrint(String topic,int zone,long []IDs, int batchSize,int start){
+	void produceAndPrint(String topic,int zone,long []IDs, String[] gates, int batchSize,int start){
 
 		Random rand = new Random();
-		List<String> gatesList = Arrays.asList("A", "B", "C","D");
+		
 		List<String> failList = Arrays.asList("OK","REJ");
 		String randomGate;
 		String randomFail;
@@ -62,14 +62,13 @@ public class AirportDepartureProducer {
 			// SECURITY CHECK
 			if (zone==1) {
 				
-			    randomGate = gatesList.get(rand.nextInt(gatesList.size()));
 			    randomFail="OK";
 			    if(i%10==0) 
 			    {
 			    	randomFail = failList.get(rand.nextInt(failList.size()));
 			    }
 				
-				String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\",\"status\":\""+randomFail+"\"}"; 
+				String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+gates[i]+"\",\"status\":\""+randomFail+"\"}"; 
 			producer.send(new ProducerRecord<String, String>(topic,zone,"Security",msg));
 			}
 			// SHOPS
@@ -81,10 +80,7 @@ public class AirportDepartureProducer {
 			// GATES --> LEAVING POINT
 			if (zone==3) {
 			
-			randomGate = gatesList.get(rand.nextInt(gatesList.size()));
-		    
-			
-			String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+randomGate+"\"}";   
+			String msg="{\"passenger_ID\":"+Long.toString(IDs[i])+",\"gate\":\""+gates[i]+"\"}";   
 			producer.send(new ProducerRecord<String, String>(topic,zone,"GatesDep",msg));
 			
 			}
@@ -125,10 +121,14 @@ public class AirportDepartureProducer {
 		Random intGenerator=new Random(seed);
 		Random doubleGenerator=new Random(seed);
 		long[] randomIDs = new long[10000];
+		String[] randomGates = new String[10000];
+
+		List<String> gatesList = Arrays.asList("A", "B", "C","D");
 		
 		for(int i=0;i<randomIDs.length;i++) {
 			
 			randomIDs[i]=Integer.toUnsignedLong(intGenerator.nextInt());
+			randomGates[i] = gatesList.get(intGenerator.nextInt(gatesList.size()));
 		}
 	
 		AirportDepartureProducer myProducer = new AirportDepartureProducer();
@@ -184,7 +184,7 @@ public class AirportDepartureProducer {
 		
 		tmpTracker=sequenceTracker;
 		
-		myProducer.produceAndPrint("AirportDep",0,randomIDs,tmpTracker,tmpTracker-effectiveSizeCheckIn);
+		myProducer.produceAndPrint("AirportDep",0,randomIDs,randomGates,tmpTracker,tmpTracker-effectiveSizeCheckIn);
 		
 		tmpTracker-=batchSizeCheckIn;
 		try {
@@ -192,21 +192,21 @@ public class AirportDepartureProducer {
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("AirportDep",1,randomIDs,tmpTracker,tmpTracker-batchSizeSecurity);
+		myProducer.produceAndPrint("AirportDep",1,randomIDs,randomGates,tmpTracker,tmpTracker-batchSizeSecurity);
 		tmpTracker-=batchSizeSecurity;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("AirportDep",2,randomIDs,tmpTracker,tmpTracker-effectiveSizeShops);
+		myProducer.produceAndPrint("AirportDep",2,randomIDs,randomGates,tmpTracker,tmpTracker-effectiveSizeShops);
 		tmpTracker-=batchSizeShops;
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
 					continue;
 				}
-		myProducer.produceAndPrint("AirportDep",3,randomIDs,tmpTracker,tmpTracker-effectiveSizeGates-batchRemainderGates);
+		myProducer.produceAndPrint("AirportDep",3,randomIDs,randomGates,tmpTracker,tmpTracker-effectiveSizeGates-batchRemainderGates);
 		try {
 		    Thread.sleep(5000);
 		    } catch (InterruptedException e) {
