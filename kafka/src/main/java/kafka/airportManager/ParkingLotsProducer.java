@@ -29,6 +29,10 @@ public class ParkingLotsProducer {
 		// Serializer for conversion the value type to bytes
 		props.put("value.serializer",
 				"org.apache.kafka.common.serialization.StringSerializer");
+		// Set property, if auto commit should happen
+		props.put("enable.auto.commit", "true");
+		// Auto commit interval, KAfka would commit offset at this interval
+		props.put("auto.commit.interval.ms", 101);
 
 		producer = new KafkaProducer<String, String>(props);
 	}
@@ -36,6 +40,8 @@ public class ParkingLotsProducer {
 //****************************************************************
 //2. TOPIC PRODUCTION
 //****************************************************************	
+
+
 	int produceAndPrint(String topic,long []IDs, int batchSize,int start, int pp){
 
 		Random rand = new Random();

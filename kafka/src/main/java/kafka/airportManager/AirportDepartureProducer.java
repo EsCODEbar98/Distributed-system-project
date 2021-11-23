@@ -29,6 +29,10 @@ public class AirportDepartureProducer {
 		// Serializer for conversion the value type to bytes
 		props.put("value.serializer",
 				"org.apache.kafka.common.serialization.StringSerializer");
+		// Set property, if auto commit should happen
+		props.put("enable.auto.commit", "true");
+		// Auto commit interval, KAfka would commit offset at this interval
+		props.put("auto.commit.interval.ms", 101);
 
 		producer = new KafkaProducer<String, String>(props);
 	}
