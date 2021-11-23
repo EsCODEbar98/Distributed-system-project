@@ -39,7 +39,7 @@ if [ "$1" = "start" ]; then
         bin/kafka-topics.sh --create --topic 'AirportArr' --partitions 4 --bootstrap-server localhost:9092
 
     ! echo "$TOPICS" | grep -q 'ParkingLots' &&
-        bin/kafka-topics.sh --create --topic 'ParkingLots' --partitions 2 --bootstrap-server localhost:9092
+        bin/kafka-topics.sh --create --topic 'ParkingLots' --partitions 3 --bootstrap-server localhost:9092
 
     sleep 5
     echo -e "\n\nDone"
@@ -57,7 +57,7 @@ elif [ "$1" = "fix" ]; then
     cd $DIR_KAFKA
     bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportDep --partitions 4
     bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportArr --partitions 4
-    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic ParkingLots --partitions 2
+    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic ParkingLots --partitions 3
 elif [ "$1" = "pstart" ]; then
     echo "Starting producers..."
     producer_start
