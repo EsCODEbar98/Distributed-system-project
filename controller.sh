@@ -14,9 +14,21 @@ producer_start () {
 }
 
 producer_stop () {
-    PRODUCER_PIDS=$(pgrep -f 'bin/java')
-    test -n "$PRODUCER_PIDS" &&
-        kill $PRODUCER_PIDS
+    local producer_pids=$(pgrep -f 'bin/java')
+    test -n "$producer_pids" &&
+        kill $producer_pids
+}
+
+check_topic () {
+    local all_topic="$1"
+    local name="$2"
+    local partitions="$3"
+
+    if echo "$all_topic" | grep -q "$name"; then
+        bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic "$name" --partitions "$partitions"
+    else
+        bin/kafka-topics.sh --create --topic "$name" --partitions "$partitions" --bootstrap-server localhost:9092
+    fi
 }
 
 if [ "$1" = "start" ]; then
@@ -32,32 +44,17 @@ if [ "$1" = "start" ]; then
     sleep 15
     TOPICS=$(bin/kafka-topics.sh --list --zookeeper localhost:2181)
 
-    ! echo "$TOPICS" | grep -q 'AirportDep' &&
-        bin/kafka-topics.sh --create --topic 'AirportDep' --partitions 4 --bootstrap-server localhost:9092
-
-    ! echo "$TOPICS" | grep -q 'AirportArr' &&
-        bin/kafka-topics.sh --create --topic 'AirportArr' --partitions 4 --bootstrap-server localhost:9092
-
-    ! echo "$TOPICS" | grep -q 'ParkingLots' &&
-        bin/kafka-topics.sh --create --topic 'ParkingLots' --partitions 3 --bootstrap-server localhost:9092
+    check_topic "$TOPICS" AirportDep 4
+    check_topic "$TOPICS" AirportArr 4
+    check_topic "$TOPICS" ParkingLots 3
 
     sleep 5
     echo -e "\n\nDone"
-elif [ "$1" = "delete" ]; then
-    cd $DIR_KAFKA
-    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic AirportDep
-    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic AirportArr
-    bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic ParkingLots
 elif [ "$1" = "info" ]; then
     cd $DIR_KAFKA
     bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic AirportDep
     bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic AirportArr
     bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic ParkingLots
-elif [ "$1" = "fix" ]; then
-    cd $DIR_KAFKA
-    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportDep --partitions 4
-    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic AirportArr --partitions 4
-    bin/kafka-topics.sh --zookeeper localhost:2181 --alter --topic ParkingLots --partitions 3
 elif [ "$1" = "pstart" ]; then
     echo "Starting producers..."
     producer_start
